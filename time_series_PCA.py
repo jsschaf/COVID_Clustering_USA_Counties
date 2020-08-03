@@ -43,7 +43,7 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
         clustered_nd_data['PC2'] = 0
         cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC1',y='PC2', c=color_map, figsize=(16,2))
         cluster_plot.set_title(u"1D Scatter Plot")
-        plt.savefig('zeros_County_PCA_kmeans_1D.png')
+        plt.savefig('County_PCA_kmeans_1D.png')
         plt.close()
     elif dimensionality == 2:
         cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC2',y='PC1', c=color_map, figsize=(16,8))
@@ -54,7 +54,7 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
                     # label county if outlier
                     if len(group) < 10:
                         cluster_plot.annotate(county, (covid_df_nd.iloc[i].PC2, covid_df_nd.iloc[i].PC1))
-        plt.savefig('zeros_County_PCA_kmeans_2D.png')
+        plt.savefig('County_PCA_kmeans_2D.png')
         plt.close()
     elif(dimensionality) == 3:  
         # 3D plotting
@@ -76,7 +76,7 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
                 if county in group:
                     if len(group) < 10:
                         ax3.text(x, y, z, '{0}'.format(df_3d.index[i]))
-        plt.savefig('zeros_County_PCA_kmeans_3D.png')
+        plt.savefig('County_PCA_kmeans_3D.png')
         plt.close()
 
 def print_results(df, k, labels):
@@ -121,12 +121,12 @@ def plot_total(df, min_clusters, max_clusters):
     total_plot = county_counts.plot(kind='scatter',x='cases',y='y', c=color_map, figsize=(16,2))
     total_plot.set_title(u"1D Scatter Plot of Total Cases")
     total_plot.set_xlabel('Total Cases')
-    plt.savefig('zeros_Total_Cases_Scatter.png')
+    plt.savefig('Total_Cases_Scatter.png')
     plt.close()
 
 
-results = open("zero_results.txt", "w")
-df = pd.read_csv("no_zeros_counties_by_date.csv", index_col=0)
+results = open("results.txt", "w")
+df = pd.read_csv("max_norm_counties_by_date.csv", index_col=0)
 #df.drop(df.loc[df.index=='New York City, New York'].index, inplace=True)
 
 # df = pd.read_csv("test_case.csv", index_col=0)
