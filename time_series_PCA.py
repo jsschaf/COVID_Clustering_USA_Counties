@@ -1,82 +1,16 @@
 import numpy as np
-from sklearn.decomposition import PCA
 import pandas as pd
-from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import datetime
-import sys
-import itertools
-
-def find_similar(setA, list_of_sets):
-    current_max = 0
-    best_elt = set()
-    for elt in list_of_sets:
-        common_no = len(set.intersection(setA, elt))
-        total_no = len(set.union(setA, elt))
-        proportion_same = float(common_no)/float(total_no)
-        if proportion_same >= current_max:
-            current_max = proportion_same
-            best_elt = elt
-    list_of_sets.remove(best_elt)
-    return best_elt, current_max
-
-def find_matches(listA, listB):
-    bestmatchA = []
-    bestmatchB = []
-    best_sim = 0
-    for perm in itertools.permutations(listA):
-        total_similarity = 0
-        matchA = []
-        matchB = []
-        listA.sort(key=len, reverse=True)
-        comparisons = list(listB)
-        for elt in perm:
-            match, similarity = find_similar(elt, comparisons)
-            total_similarity += similarity
-            if(match in matchB):
-                print("Error: duplicate clusters have been compared.")
-                sys.exit()
-            matchA.append(elt)
-            matchB.append(match)
-
-        if total_similarity > best_sim:
-            best_sim = total_similarity
-            bestmatchA = matchA
-            bestmatchB = matchB
-    return bestmatchA, bestmatchB
-
-def cluster(min_clusters, max_clusters, df):
-    
-    ''' For K-means '''
-    performance = []
-
-    for k in range(min_clusters, max_clusters):
-        # making random_state an int will make kmeans determinstic
-        kmeans = KMeans(n_clusters=k, random_state=5)
-        clusters = kmeans.fit(df)
-        performance.append(kmeans.inertia_)
-    
-    # add min_clusters to offset 0-indexing
-    optimal_k = min_clusters + performance.index(max(performance))
-
-    best = KMeans(n_clusters=optimal_k, random_state=5)
-
-    # re-create optimal kmeans clustering and plot
-    ''' For Spectral Clustering 
-    optimal_k = min_clusters
-    best = SpectralClustering(n_clusters=optimal_k, random_state=5)
-    '''
-    clusters = best.fit(df)
-
-    return clusters, optimal_k
+from cluster import find_similar, find_matches, cluster
+from PCA import do_PCA
 
 def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
 
     clustered_nd_data = covid_df_nd.copy()
     clustered_nd_data['cluster'] = pd.Series(clusters_nd.labels_, index=covid_df_nd.index)
-
     # Compare These Clusters to original higher dimensional kmeans clustering
     clustered_data[str(dimensionality) + 'D_cluster'] = pd.Series(clusters_nd.labels_, index=covid_df_nd.index)
 
@@ -109,18 +43,23 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
         clustered_nd_data['PC2'] = 0
         cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC1',y='PC2', c=color_map, figsize=(16,2))
         cluster_plot.set_title(u"1D Scatter Plot")
-        plt.savefig('County_PCA_kmeans_1D.png')
+        plt.savefig('zeros_County_PCA_kmeans_1D.png')
         plt.close()
     elif dimensionality == 2:
         cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC2',y='PC1', c=color_map, figsize=(16,8))
         cluster_plot.set_title(u"2D Scatter Plot")
-        #for i, county in enumerate(covid_df_nd.index):
-        #    cluster_plot.annotate(county, (covid_df_nd.iloc[i].PC2, covid_df_nd.iloc[i].PC1))
-        plt.savefig('County_PCA_kmeans_2D.png')
+        for i, county in enumerate(covid_df_nd.index):
+            for group in cluster_grouping_nD:
+                if county in group:
+                    # label county if outlier
+                    if len(group) < 10:
+                        cluster_plot.annotate(county, (covid_df_nd.iloc[i].PC2, covid_df_nd.iloc[i].PC1))
+        plt.savefig('zeros_County_PCA_kmeans_2D.png')
         plt.close()
     elif(dimensionality) == 3:  
         # 3D plotting
         fig = plt.figure(figsize=(24,12))
+        # Create 3D graph
         ax3 = fig.gca(projection='3d')
         ax3.set_xlabel('PC1')
         ax3.set_ylabel('PC2')
@@ -132,30 +71,13 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
             col = colors[int(clustered_data.iloc[i]['3D_cluster'])]
             x, y, z = df_3d.iloc[i]['PC1'], df_3d.iloc[i]['PC2'], df_3d.iloc[i]['PC3']
             ax3.scatter(x, y, z, c=col)
-            # to label each point
-            # ax3.text(x, y, z, '{0}'.format(df_3d.index[i]))
-        plt.savefig('County_PCA_kmeans_3D.png')
+            # to label each point in small clusters
+            for group in cluster_grouping_nD:
+                if county in group:
+                    if len(group) < 10:
+                        ax3.text(x, y, z, '{0}'.format(df_3d.index[i]))
+        plt.savefig('zeros_County_PCA_kmeans_3D.png')
         plt.close()
-
-def do_PCA(covid_df, n):
-    
-    pca = PCA(n_components=n)
-    pca.fit(covid_df)
-    covid_nd = pca.transform(covid_df)
-    covid_df_nd = pd.DataFrame(covid_nd)
-    covid_df_nd.index = covid_df.index
-    pca_columns = []
-    
-    for i in range(1, n+1):
-        pca_columns.append('PC' + str(i))
-    
-    covid_df_nd.columns = pca_columns
-    
-    # Allows us to find contribution of each feature to PCA, if desired
-    loadings = pd.DataFrame(pca.components_.T, index=covid_df.columns)
-
-    return covid_df_nd
-
 
 def print_results(df, k, labels):
     ''' Output Findings '''
@@ -187,12 +109,27 @@ def print_results(df, k, labels):
         results.write("Max Cases for single County: " + str(HD_max_cases)+"\nTotal Cases: " + str(HD_total_cases))
         results.write("\nAverage Date of First Case: " + str(ave_date.strftime('%Y-%m-%d')) + "\n\n")
 
-results = open("Results.txt", "w")
+def plot_total(df, min_clusters, max_clusters):
+    # Plot and cluster total cases for each county
+    county_counts = pd.DataFrame(index=df.index)
+    county_counts["cases"] = df.sum(axis=1)
+    total_clusters, k = cluster(min_clusters, max_clusters, county_counts)
+    county_counts['y'] = 0
+    clustered_total_data = county_counts.copy()
+    clustered_total_data['cluster'] = pd.Series(total_clusters.labels_, index=county_counts.index)
+    color_map = clustered_total_data.cluster.map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    total_plot = county_counts.plot(kind='scatter',x='cases',y='y', c=color_map, figsize=(16,2))
+    total_plot.set_title(u"1D Scatter Plot of Total Cases")
+    total_plot.set_xlabel('Total Cases')
+    plt.savefig('zeros_Total_Cases_Scatter.png')
+    plt.close()
 
-df = pd.read_csv("counties_by_date.csv", index_col=0)
+
+results = open("zero_results.txt", "w")
+df = pd.read_csv("no_zeros_counties_by_date.csv", index_col=0)
+#df.drop(df.loc[df.index=='New York City, New York'].index, inplace=True)
+
 # df = pd.read_csv("test_case.csv", index_col=0)
-# Randomize rows - makes PCA non-deterministic
-# df = shuffle(df)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
@@ -202,7 +139,6 @@ max_clusters = 8
 HD_clusters, optimal_k = cluster(min_clusters, max_clusters, df)
 
 clustered_data = pd.DataFrame(index=df.index)
-
 clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
 # Do PCA for 1, 2 and 3 dimensions
@@ -222,20 +158,7 @@ else:
     compare_clusters(clustered_data['HD_cluster'], df_2d, 2, k_2, clusters_2d)
     compare_clusters(clustered_data['HD_cluster'], df_3d, 3, k_3, clusters_3d)
 
-# Plot and cluster total cases for each county
-county_counts = pd.DataFrame(index=df.index)
-county_counts["cases"] = df.sum(axis=1)
-total_clusters, k = cluster(min_clusters, max_clusters, county_counts)
-county_counts['y'] = 0
-clustered_total_data = county_counts.copy()
-clustered_total_data['cluster'] = pd.Series(total_clusters.labels_, index=county_counts.index)
-color_map = clustered_total_data.cluster.map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
-total_plot = county_counts.plot(kind='scatter',x='cases',y='y', c=color_map, figsize=(16,2))
-total_plot.set_title(u"1D Scatter Plot of Total Cases")
-total_plot.set_xlabel('Total Cases')
-plt.savefig('Total_Cases_Scatter.png')
-plt.close()
-
+plot_total(df, min_clusters, max_clusters)
 
 # Save Findings
 results.write("Data by County total Counts")
