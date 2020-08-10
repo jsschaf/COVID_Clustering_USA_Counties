@@ -2,24 +2,34 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.manifold import TSNE
+from sklearn.decomposition import KernelPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import datetime
-from cluster import find_similar, find_matches, cluster
-from PCA import do_PCA
+from cluster import find_similar, find_matches
 import seaborn as sns
-# import umap
+import umap
 import r_PCA as robust
+from sklearn.decomposition import PCA
 
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, MeanShift, Birch, MiniBatchKMeans
 
-def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
+def choose_k(df, filename):
+    sse = []
+    for k in range(1, 11):
+        kmeans = KMeans(n_clusters=k, random_state=5)
+        kmeans.fit(df)
+        sse.append(kmeans.inertia_)
 
-    clustered_nd_data = covid_df_nd.copy()
-    clustered_nd_data['cluster'] = pd.Series(clusters_nd.labels_, index=covid_df_nd.index)
-    # Compare These Clusters to original higher dimensional kmeans clustering
-    clustered_data[str(dimensionality) + 'D_cluster'] = pd.Series(clusters_nd.labels_, index=covid_df_nd.index)
+    plt.plot(range(1, 11), sse)
+    plt.xticks(range(1, 11))
+    plt.xlabel("Number of Clusters")
+    plt.ylabel("SSE")
+    plt.savefig(filename)
+    plt.close()
+
+def compare_clusters(old, new, k):
 
     # See if grouping of countries is different before and after PCA
     # Create two unordered sets and compare grouping of countries
@@ -27,64 +37,26 @@ def compare_clusters(old, covid_df_nd, dimensionality, k, clusters_nd):
     cluster_grouping_HD = []
     
     for cluster_number in range(0, k):
-        cluster_grouping_nD.append(set(clustered_data[clustered_data[str(dimensionality) + 'D_cluster'] == cluster_number].index))
-        cluster_grouping_HD.append(set(clustered_data[clustered_data['HD_cluster'] == cluster_number].index))
+        cluster_grouping_HD.append(set(old[old == cluster_number].index))
+        cluster_grouping_nD.append(set(new[new == cluster_number].index))
     
     cluster_A, cluster_B = find_matches(cluster_grouping_nD, cluster_grouping_HD)
     
     if(cluster_A == cluster_B):
-        results.write("Clusters after PCA to " + str(dimensionality) + " dimensions is the same\n")
+        results.write("Clusters after PCA to 2 dimensions is the same\n")
     else:
-        unchanged_counties = set()
+        num_changed = 0
+        num_same = 0
         for i in range(k):
             common = set.intersection(cluster_A[i], cluster_B[i])
-            unchanged_counties = set.union(unchanged_counties,common)
+            changed_countes = set.symmetric_difference(cluster_A[i], cluster_B[i])
+            num_changed += len(changed_countes)
 
-        results.write("PCA to " + str(dimensionality) + " has changed cluster membership\n")
-        results.write(str(len(unchanged_counties)) + "/" + str(len(old.index)) + " Counties have remained in same Clusters.\n")
+            num_same += len(common)
 
-    # Map clusters to colors instead of grayscale
-    color_map = clustered_nd_data.cluster.map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
-    
-    if dimensionality == 1:
-        clustered_nd_data['PC2'] = 0
-        cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC1',y='PC2', c=color_map, figsize=(16,2))
-        cluster_plot.set_title(u"1D Scatter Plot")
-        plt.savefig('County_PCA_kmeans_1D.png')
-        plt.close()
-    elif dimensionality == 2:
-        cluster_plot = clustered_nd_data.plot(kind='scatter',x='PC2',y='PC1', c=color_map, figsize=(16,8))
-        cluster_plot.set_title(u"2D Scatter Plot")
-        for i, county in enumerate(covid_df_nd.index):
-            for group in cluster_grouping_nD:
-                if county in group:
-                    # label county if outlier
-                    if len(group) < 10:
-                        cluster_plot.annotate(county, (covid_df_nd.iloc[i].PC2, covid_df_nd.iloc[i].PC1))
-        plt.savefig('County_PCA_kmeans_2D.png')
-        plt.close()
-    elif(dimensionality) == 3:  
-        # 3D plotting
-        fig = plt.figure(figsize=(24,12))
-        # Create 3D graph
-        ax3 = fig.gca(projection='3d')
-        ax3.set_xlabel('PC1')
-        ax3.set_ylabel('PC2')
-        ax3.set_zlabel('PC3')
-        ax3.set_title(u"3D Scatter Plot")
-        colors = {0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'}
-
-        for i, county in enumerate(df.index):
-            col = colors[int(clustered_data.iloc[i]['3D_cluster'])]
-            x, y, z = df_3d.iloc[i]['PC1'], df_3d.iloc[i]['PC2'], df_3d.iloc[i]['PC3']
-            ax3.scatter(x, y, z, c=col)
-            # to label each point in small clusters
-            for group in cluster_grouping_nD:
-                if county in group:
-                    if len(group) < 10:
-                        ax3.text(x, y, z, '{0}'.format(df_3d.index[i]))
-        plt.savefig('County_PCA_kmeans_3D.png')
-        plt.close()
+        num_changed /= 2
+        results.write("\nCluster membership has changed:\n")
+        results.write(str(int(num_changed)) + "/" + str(len(old.index)) + " Counties have changed Clusters.\n")
 
 def print_results(df, k, labels):
     ''' Output Findings '''
@@ -120,7 +92,7 @@ def plot_total(df, min_clusters, max_clusters):
     # Plot and cluster total cases for each county
     county_counts = pd.DataFrame(index=df.index)
     county_counts["cases"] = df.sum(axis=1)
-    total_clusters, k = cluster(min_clusters, max_clusters, county_counts)
+    total_clusters = KMeans(n_cluster=4, random_state=5).fit(county_counts)
     county_counts['y'] = 0
     clustered_total_data = county_counts.copy()
     clustered_total_data['cluster'] = pd.Series(total_clusters.labels_, index=county_counts.index)
@@ -131,8 +103,8 @@ def plot_total(df, min_clusters, max_clusters):
     plt.savefig('Total_Cases_Scatter.png')
     plt.close()
 
-def do_TSNE(df):
-    X_2d = TSNE(n_components=2).fit_transform(df)
+def do_TSNE(df, clustered_data):
+    X_2d = TSNE(n_components=2, random_state=5).fit_transform(df)
     covid_df_nd = pd.DataFrame(X_2d)
     covid_df_nd.index = df.index
     tsne_columns = []
@@ -141,20 +113,41 @@ def do_TSNE(df):
     covid_df_nd.columns = tsne_columns
     tsne_2d = covid_df_nd
 
-    # Do kmeans
-    kmeans = KMeans(n_clusters=4, random_state=5)
-    clusters = kmeans.fit(tsne_2d)
-    clustered_data = pd.DataFrame(index=df.index)
-    # clustered_data['HD_cluster'] = y = target labels = cluster assignment
-    clustered_data['TSNE'] = pd.Series(clusters.labels_, index=df.index)
-
-    color_map = clustered_data['TSNE'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
-    tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(16,8))
-    tsne_plot.set_title(u"TSNE 2D Scatter Plot")
-    plt.savefig('County_TSNE_kmeans_2D.png')
+    color_map = clustered_data['HD_cluster'].map({0:'g', 1: 'b', 2: 'k', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
+    
+    tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
+    tsne_plot.set_title(u"TSNE Colored by Original Clusters")
+    plt.savefig('County_TSNE_kmeans_2D_oldclusters.png')
     plt.close()
 
-def do_LDA(df):
+    # Do kmeans
+    clustering = KMeans(n_clusters=4, random_state=5).fit(X_2d)
+
+    # do mini batch k means
+    # clustering = MiniBatchKMeans(n_clusters=4, random_state=5).fit(X_2d)
+
+    # spectral cluster
+    # spectral = SpectralClustering(n_clusters=2).fit(X_2d)
+
+    # agglomerative clustering
+    # clustering = AgglomerativeClustering(n_clusters=4).fit(X_2d)
+
+    # meanshift cluster
+    # clustering = MeanShift(bandwidth=4).fit(X_2d)
+
+    # birch
+    # clustering = Birch(n_clusters=4).fit(X_2d).predict(X_2d)
+
+    clustered_data['TSNE'] = pd.Series(clustering.labels_, index=df.index)
+
+    color_map = clustered_data['TSNE'].map({0:'k', 1: 'r', 2: 'b', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
+    
+    tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
+    tsne_plot.set_title(u"TSNE Colored by New Clusters")
+    plt.savefig('County_TSNE_kmeans_2D_newclusters.png')
+    plt.close()
+
+def do_LDA(df, clustered_data):
     # Do LDA for 1, 2, and 3 dimensions 
     lda = LinearDiscriminantAnalysis(n_components=2)
     lda.fit(df, clustered_data['HD_cluster'])
@@ -167,79 +160,152 @@ def do_LDA(df):
     covid_df_nd.columns = lda_columns
     lda_2d = covid_df_nd
     color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
-    lda_plot = lda_2d.plot(kind='scatter',x='LD2',y='LD1', c=color_map, figsize=(16,8))
-    lda_plot.set_title(u"LDA 2D Scatter Plot")
-    plt.savefig('County_LDA_kmeans_2D.png')
+    lda_plot = lda_2d.plot(kind='scatter',x='LD2',y='LD1', c=color_map, figsize=(12,8))
+    lda_plot.set_title(u"LDA Colored by Old Clusters")
+    plt.savefig('County_LDA_kmeans_2D_oldclusters.png')
+    plt.close()
+
+    # new cluster color
+    kmeans = KMeans(n_clusters=4, random_state=5)
+    clusters = kmeans.fit(lda_2d)
+    clustered_data['LDA'] = pd.Series(clusters.labels_, index=df.index)
+    color_map = clustered_data['LDA'].map({0:'g', 1: 'r', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    lda_plot = lda_2d.plot(kind='scatter',x='LD2',y='LD1', c=color_map, figsize=(12,8))
+    lda_plot.set_title(u"LDA Colored by New Clusters")
+    plt.savefig('County_LDA_kmeans_2D_newclusters.png')
     plt.close()
 
 def do_UMAP(df, clustered_data):
-
-    reducer = umap.UMAP()
+    # Umap algorithms
+    reducer = umap.UMAP(random_state=5)
     embedding = reducer.fit_transform(df)
-    color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+
+    color_map = clustered_data['HD_cluster'].map({0:'k', 1: 'b', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
+    plt.figure(figsize=(12, 8))
     plt.scatter(
         embedding[:, 0],
         embedding[:, 1],
-        c=color_map,
-        figsize=(16,8))
-    plt.gca().set_aspect('equal', 'datalim')
-    plt.title('UMAP projection of the COVID dataset', fontsize=24)
-    plt.savefig('County_UMAP_kmeans_2D.png')
+        c=color_map)
+    #plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP Colored by Original Clusters', fontsize=18)
+    plt.savefig('County_UMAP_kmeans_2D_oldclusters.png')
     plt.close()
+
+    # new cluster color
+    kmeans = KMeans(n_clusters=4, random_state=5)
+    clusters = kmeans.fit(embedding)
+    clustered_data['UMAP'] = pd.Series(clusters.labels_, index=df.index)
+    color_map = clustered_data['UMAP'].map({0:'k', 1: 'r', 2: 'b', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
+    plt.figure(figsize=(12, 8))
+    plt.scatter(
+        embedding[:, 0],
+        embedding[:, 1],
+        c=color_map)
+    #plt.gca().set_aspect('equal', 'datalim')
+    plt.title('UMAP Colored by New Clusters', fontsize=18)
+    plt.savefig('County_UMAP_kmeans_2D_newclusters.png')
+    plt.close()
+
+def do_PCA(df, clustered_data):
+    pca = PCA(n_components=2, random_state=5)
+    pca.fit(df)
+    covid_nd = pca.transform(df)
+    choose_k(covid_nd, "pca2d_kmeans_perf.png")
+    cluster = KMeans(n_clusters=4, random_state=5)
+    clusters = cluster.fit(covid_nd)
+    clustered_data['PCA'] = pd.Series(clusters.labels_, index=df.index)
+
+    covid_df_nd = pd.DataFrame(covid_nd)
+    covid_df_nd.index = df.index
+    covid_df_nd.columns = ['PC1', 'PC2']
+
+    color_map = clustered_data['PCA'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    
+    cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    cluster_plot.set_title(u"PCA Colored by New Clusters")
+
+    plt.savefig('County_PCA_kmeans_2D_newclusters.png')
+    plt.close()
+    color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+
+    original_cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    original_cluster_plot.set_title(u"PCA Colored by Original Clusters")
+    plt.savefig('County_PCA_kmeans_2D_oldclusters.png')
+    plt.close()
+
+    return
 
 results = open("results.txt", "w")
 df = pd.read_csv("max_norm_counties_by_date.csv", index_col=0)
-# df.drop(df.loc[df.index=='New York City, New York'].index, inplace=True)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
-min_clusters = 4
+optimal_k = 4
 max_clusters = 8
 
-HD_clusters, optimal_k = cluster(min_clusters, max_clusters, df)
+HD_clusters = KMeans(n_clusters=4, random_state=5).fit(df)
+
+# print out graph to show kmeans performance for each k in higher dimension
+# choose_k(df, "HD_kmeans_perf.png")
 
 clustered_data = pd.DataFrame(index=df.index)
 # clustered_data['HD_cluster'] = y = target labels = cluster assignment
 clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
-arr = pd.to_numpy(df)
-# Do ROBUST PCA
-rpca = robust.R_pca(arr)
-L, S = rpca.fit(max_iter=10, iter_print=10)
+# Do TSNE for 2 DIMS
+results.write("Comparing TSNE Clusters")
+do_TSNE(df, clustered_data)
+compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
 
-# visually inspect results
-rpca.plot_fit()
-print("up to here")
-plt.savefig("RobustPCA.png")
+
+# Do LDA for 2 Dimensions
+results.write("Comparing LDA Clusters")
+do_LDA(df, clustered_data)
+compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
+
+# Do PCA
+do_PCA(df, clustered_data)
+results.write("Comparing PCA Clusters")
+compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
+
+results.write("Comparing UMAP Clusters")
+do_UMAP(df, clustered_data)
+compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
+
 
 '''
+print(clustered_data)
+
+
+# PCA to 2d
+df_2d = do_PCA(df, 2)
+
 # Do UMAP to 2D
 do_UMAP(df, clustered_data)
 
+# do kernel PCA
+kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10)
+X_kpca = kpca.fit_transform(df)
+X_back = kpca.inverse_transform(X_kpca)
+pca = PCA()
+X_pca = pca.fit_transform(df)
 
-# Do PCA for 1, 2 and 3 dimensions 
-df_1d = do_PCA(df, 1)
-df_2d = do_PCA(df, 2)
-df_3d = do_PCA(df, 3)
+arr = df.to_numpy()
+# Do ROBUST PCA
+rpca = robust.R_pca(arr)
+L, S = rpca.fit(max_iter=1000, iter_print=100)
+
+# visually inspect results
+rpca.plot_fit()
+plt.savefig("RobustPCA.png")
 
 # Do TSNE for 2 DIMS
-do_TSNE(df)
+do_TSNE(df, clustered_data)
 
 # Do LDA for 2 Dimensions
-do_LDA(df)
+do_LDA(df, clustered_data)
 
-clusters_2d, k_2 = cluster(min_clusters, max_clusters, df_2d)
-clusters_3d, k_3 = cluster(min_clusters, max_clusters, df_3d)
-clusters_1d, k_1 = cluster(min_clusters, max_clusters, df_1d)
-
-if(k_2 != k_3 != k_1 != optimal_k):
-    results.write("Different no. of clusters formed before/after DR\nk before: " + str(optimal_k) + " k after: " + str(k_2))
-else:
-    # Compare CLustering before and after PCA for data with dimensions: 1, 2, 3 
-    compare_clusters(clustered_data['HD_cluster'], df_1d, 1, k_1, clusters_1d)
-    compare_clusters(clustered_data['HD_cluster'], df_2d, 2, k_2, clusters_2d)
-    compare_clusters(clustered_data['HD_cluster'], df_3d, 3, k_3, clusters_3d)
-
+compare_clusters(clustered_data['HD_cluster'], df_2d, 2, k_2, clusters_2d)
 plot_total(df, min_clusters, max_clusters)
 
 # Save Findings

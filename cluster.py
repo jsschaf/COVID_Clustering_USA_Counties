@@ -41,31 +41,3 @@ def find_matches(listA, listB):
             bestmatchA = matchA
             bestmatchB = matchB
     return bestmatchA, bestmatchB
-
-
-def cluster(min_clusters, max_clusters, df):
-    
-    ''' For K-means '''
-    performance = []
-
-    for k in range(min_clusters, max_clusters):
-        # making random_state an int will make kmeans determinstic
-        kmeans = KMeans(n_clusters=k, random_state=5)
-        clusters = kmeans.fit(df)
-        # todo: use elbow method with inertia
-        # todo: investigate adjusted rand index
-        performance.append(kmeans.inertia_)
-    
-    # add min_clusters to offset 0-indexing
-    optimal_k = min_clusters + performance.index(max(performance))
-
-    best = KMeans(n_clusters=optimal_k, random_state=5)
-
-    # re-create optimal kmeans clustering and plot
-    ''' For Spectral Clustering 
-    optimal_k = min_clusters
-    best = SpectralClustering(n_clusters=optimal_k, random_state=5)
-    '''
-    clusters = best.fit(df)
-
-    return clusters, optimal_k
