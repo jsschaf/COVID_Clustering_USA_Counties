@@ -7,27 +7,13 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import datetime
-from cluster import find_similar, find_matches
+from helper import find_similar, find_matches, pca_reconstruct, choose_k, plot_total
 import seaborn as sns
 import umap
 import r_PCA as robust
 from sklearn.decomposition import PCA
 
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, MeanShift, Birch, MiniBatchKMeans
-
-def choose_k(df, filename):
-    sse = []
-    for k in range(1, 11):
-        kmeans = KMeans(n_clusters=k, random_state=5)
-        kmeans.fit(df)
-        sse.append(kmeans.inertia_)
-
-    plt.plot(range(1, 11), sse)
-    plt.xticks(range(1, 11))
-    plt.xlabel("Number of Clusters")
-    plt.ylabel("SSE")
-    plt.savefig(filename)
-    plt.close()
 
 def compare_clusters(old, new, k):
 
@@ -88,21 +74,6 @@ def print_results(df, k, labels):
         results.write("Max Cases for single County: " + str(HD_max_cases)+"\nTotal Cases: " + str(HD_total_cases))
         results.write("\nAverage Date of First Case: " + str(ave_date.strftime('%Y-%m-%d')) + "\n\n")
 
-def plot_total(df, min_clusters, max_clusters):
-    # Plot and cluster total cases for each county
-    county_counts = pd.DataFrame(index=df.index)
-    county_counts["cases"] = df.sum(axis=1)
-    total_clusters = KMeans(n_cluster=4, random_state=5).fit(county_counts)
-    county_counts['y'] = 0
-    clustered_total_data = county_counts.copy()
-    clustered_total_data['cluster'] = pd.Series(total_clusters.labels_, index=county_counts.index)
-    color_map = clustered_total_data.cluster.map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
-    total_plot = county_counts.plot(kind='scatter',x='cases',y='y', c=color_map, figsize=(16,2))
-    total_plot.set_title(u"1D Scatter Plot of Total Cases")
-    total_plot.set_xlabel('Total Cases')
-    plt.savefig('Total_Cases_Scatter.png')
-    plt.close()
-
 def do_TSNE(df, clustered_data):
     X_2d = TSNE(n_components=2, random_state=5).fit_transform(df)
     covid_df_nd = pd.DataFrame(X_2d)
@@ -121,13 +92,13 @@ def do_TSNE(df, clustered_data):
     plt.close()
 
     # Do kmeans
-    # clustering = KMeans(n_clusters=4, random_state=5).fit(X_2d)
+    clustering = KMeans(n_clusters=4, random_state=5).fit(X_2d)
 
     # do mini batch k means
     # clustering = MiniBatchKMeans(n_clusters=4, random_state=5).fit(X_2d)
 
     # spectral cluster
-    clustering = SpectralClustering(n_clusters=4).fit(X_2d)
+    # clustering = SpectralClustering(n_clusters=4).fit(X_2d)
 
     # agglomerative clustering
     # clustering = AgglomerativeClustering(n_clusters=4).fit(X_2d)
@@ -235,6 +206,36 @@ def do_PCA(df, clustered_data):
 
     return
 
+def do_kPCA(df, clustered_data):
+
+    #   do kernel PCA
+    kpca = KernelPCA(n_components=2, kernel="poly")
+    covid_nd = kpca.fit_transform(df) 
+
+    cluster = KMeans(n_clusters=4, random_state=5)
+    clusters = cluster.fit(covid_nd)
+    clustered_data['kPCA'] = pd.Series(clusters.labels_, index=df.index)
+
+    covid_df_nd = pd.DataFrame(covid_nd)
+    covid_df_nd.index = df.index
+    covid_df_nd.columns = ['PC1', 'PC2']
+
+    color_map = clustered_data['kPCA'].map({0:'b', 1: 'k', 2: 'r', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
+    
+    cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    cluster_plot.set_title(u"kPCA Colored by New Clusters")
+
+    plt.savefig('County_kPCA_kmeans_2D_newclusters.png')
+    plt.close()
+    color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+
+    original_cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    original_cluster_plot.set_title(u"kPCA Colored by Original Clusters")
+    plt.savefig('County_kPCA_kmeans_2D_oldclusters.png')
+    plt.close()
+
+    return
+
 results = open("results.txt", "w")
 df = pd.read_csv("max_norm_counties_by_date.csv", index_col=0)
 
@@ -252,11 +253,15 @@ clustered_data = pd.DataFrame(index=df.index)
 # clustered_data['HD_cluster'] = y = target labels = cluster assignment
 clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
+# Do kPCA
+do_kPCA(df, clustered_data)
+results.write("Comparing Kernel PCA Clusters")
+compare_clusters(clustered_data['HD_cluster'], clustered_data['kPCA'], optimal_k)
+
 # Do TSNE for 2 DIMS
 results.write("Comparing TSNE Clusters")
 do_TSNE(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
-
 
 # Do LDA for 2 Dimensions
 results.write("Comparing LDA Clusters")
@@ -268,14 +273,13 @@ do_PCA(df, clustered_data)
 results.write("Comparing PCA Clusters")
 compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
 
+# Do UMAP
 results.write("Comparing UMAP Clusters")
 do_UMAP(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
 
-
 '''
 print(clustered_data)
-
 
 # PCA to 2d
 df_2d = do_PCA(df, 2)
@@ -283,12 +287,6 @@ df_2d = do_PCA(df, 2)
 # Do UMAP to 2D
 do_UMAP(df, clustered_data)
 
-# do kernel PCA
-kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=10)
-X_kpca = kpca.fit_transform(df)
-X_back = kpca.inverse_transform(X_kpca)
-pca = PCA()
-X_pca = pca.fit_transform(df)
 
 arr = df.to_numpy()
 # Do ROBUST PCA

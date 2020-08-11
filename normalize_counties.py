@@ -1,7 +1,7 @@
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import numpy as np
 # import data
-df = pd.read_csv("counties_by_date.csv", index_col=0)
+df = pd.read_csv("counties_by_datev2.csv", index_col=0)
 
 # Normalize by row sums
 # new_df = df.div(df.sum(axis=1), axis=0)#.fillna(0)
