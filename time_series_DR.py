@@ -121,13 +121,13 @@ def do_TSNE(df, clustered_data):
     plt.close()
 
     # Do kmeans
-    clustering = KMeans(n_clusters=4, random_state=5).fit(X_2d)
+    # clustering = KMeans(n_clusters=4, random_state=5).fit(X_2d)
 
     # do mini batch k means
     # clustering = MiniBatchKMeans(n_clusters=4, random_state=5).fit(X_2d)
 
     # spectral cluster
-    # spectral = SpectralClustering(n_clusters=2).fit(X_2d)
+    clustering = SpectralClustering(n_clusters=4).fit(X_2d)
 
     # agglomerative clustering
     # clustering = AgglomerativeClustering(n_clusters=4).fit(X_2d)
@@ -144,7 +144,7 @@ def do_TSNE(df, clustered_data):
     
     tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by New Clusters")
-    plt.savefig('County_TSNE_kmeans_2D_newclusters.png')
+    plt.savefig('County_TSNE_spectral_2D_newclusters.png')
     plt.close()
 
 def do_LDA(df, clustered_data):
