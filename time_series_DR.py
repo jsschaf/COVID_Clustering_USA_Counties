@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
-from sklearn.manifold import TSNE
+from sklearn.manifold import TSNE, MDS
 from sklearn.decomposition import KernelPCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import matplotlib.pyplot as plt
@@ -42,7 +42,7 @@ def compare_clusters(old, new, k):
 
         num_changed /= 2
         results.write("\nCluster membership has changed:\n")
-        results.write(str(int(num_changed)) + "/" + str(len(old.index)) + " Counties have changed Clusters.\n")
+        results.write(str(int(num_changed)) + "/" + str(len(old.index)) + " Counties have changed Clusters.\n\n")
 
 def print_results(df, k, labels):
     ''' Output Findings '''
@@ -54,7 +54,7 @@ def print_results(df, k, labels):
         HD_total_cases = 0
         # save the data observations
         HD_number_members = len(ds)
-        for county, value in ds.iterrows():
+        for _, value in ds.iterrows():
             county_cases = sum(value)
             if county_cases > HD_max_cases:
                 HD_max_cases = county_cases
@@ -236,6 +236,36 @@ def do_kPCA(df, clustered_data):
 
     return
 
+def do_MDS(df, clustered_data):
+    mds = MDS(n_components=2)
+    covid_nd = mds.fit_transform(df)
+
+    choose_k(covid_nd, "mds2d_kmeans_perf.png")
+    cluster = KMeans(n_clusters=4, random_state=5)
+    clusters = cluster.fit(covid_nd)
+    clustered_data['MDS'] = pd.Series(clusters.labels_, index=df.index)
+
+    covid_df_nd = pd.DataFrame(covid_nd)
+    covid_df_nd.index = df.index
+    covid_df_nd.columns = ['MD1', 'MD2']
+
+    color_map = clustered_data['MDSƒ'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    
+    cluster_plot = covid_df_nd.plot(kind='scatter', x='MD2', y='MD1', c=color_map, figsize=(12,8))
+    cluster_plot.set_title(u"MDS Colored by New Clusters")
+
+    plt.savefig('County_MDS_kmeans_2D_newclusters.png')
+    plt.close()
+    color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+
+    original_cluster_plot = covid_df_nd.plot(kind='scatter', x='MD2', y='MD1', c=color_map, figsize=(12,8))
+    original_cluster_plot.set_title(u"MDS Colored by Original Clusters")
+    plt.savefig('County_MDS_kmeans_2D_oldclusters.png')
+    plt.close()
+
+    return
+
+
 results = open("results.txt", "w")
 df = pd.read_csv("max_norm_counties_by_date.csv", index_col=0)
 
@@ -254,10 +284,19 @@ clustered_data = pd.DataFrame(index=df.index)
 clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
 # reverse is construct from PCA reduced data
-reverse = pca_reconstruct(df)
+# reverse = pca_reconstruct(df)
 
+# Do PCA
+do_PCA(df, clustered_data)
+results.write("Comparing PCA Clusters")
+compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
 
 '''
+# Do MDS
+do_MDS(df, clustered_data)
+results.write("Comparing MDS Clusters")
+compare_clusters(clustered_data['HD_cluster'], clustered_data['MDS'], optimal_k)
+
 # Do kPCA
 do_kPCA(df, clustered_data)
 results.write("Comparing Kernel PCA Clusters")
@@ -273,24 +312,20 @@ results.write("Comparing LDA Clusters")
 do_LDA(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
 
-# Do PCA
-do_PCA(df, clustered_data)
-results.write("Comparing PCA Clusters")
-compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
-
 # Do UMAP
 results.write("Comparing UMAP Clusters")
 do_UMAP(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
+'''
+# Save Findings
+results.write("Data by County total Counts")
+results.write("\nClustering Data before PCA:\n")
+print_results(df, optimal_k, clustered_data['HD_cluster'])
+results.write("\nClustering Data after PCA to 2D:\n")
+print_results(df, optimal_k, clustered_data['PCA'])
 
+'''
 print(clustered_data)
-
-# PCA to 2d
-df_2d = do_PCA(df, 2)
-
-# Do UMAP to 2D
-do_UMAP(df, clustered_data)
-
 
 arr = df.to_numpy()
 # Do ROBUST PCA
@@ -301,23 +336,5 @@ L, S = rpca.fit(max_iter=1000, iter_print=100)
 rpca.plot_fit()
 plt.savefig("RobustPCA.png")
 
-# Do TSNE for 2 DIMS
-do_TSNE(df, clustered_data)
-
-# Do LDA for 2 Dimensions
-do_LDA(df, clustered_data)
-
 compare_clusters(clustered_data['HD_cluster'], df_2d, 2, k_2, clusters_2d)
 plot_total(df, min_clusters, max_clusters)
-
-# Save Findings
-results.write("Data by County total Counts")
-results.write("\nClustering Data before PCA:\n")
-print_results(df, optimal_k, HD_clusters.labels_)
-results.write("\nClustering Data after PCA to 1D:\n")
-print_results(df, optimal_k, clusters_1d.labels_)
-results.write("\nClustering Data after PCA to 2D:\n")
-print_results(df, optimal_k, clusters_2d.labels_)
-results.write("\nClustering Data after PCA to 3D:\n")
-print_results(df, optimal_k, clusters_3d.labels_)
-'''

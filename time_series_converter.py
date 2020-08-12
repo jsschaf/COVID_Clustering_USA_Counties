@@ -6,7 +6,7 @@ df = pd.read_csv("us-counties.csv")
 df.drop(df.loc[df['county']=='Unknown'].index, inplace=True)
 df["counties"] = df["county"] + ", " + df["state"]
 df.drop(columns=['county', 'state'], axis=0, inplace=True)
-test = df.groupby(["counties", "date"])["cases"].sum().apply(lambda x: x).to_dict()
+test = df.groupby(["counties", "date"])["deaths"].sum().apply(lambda x: x).to_dict()
 dates = df.date.unique()
 counties = df.counties.unique()
 
