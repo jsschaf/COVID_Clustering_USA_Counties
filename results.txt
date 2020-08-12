@@ -1,15 +1,3 @@
-Comparing Kernel PCA Clusters
+Comparing Reversed PCA Clusters
 Cluster membership has changed:
-209/3197 Counties have changed Clusters.
-Comparing TSNE Clusters
-Cluster membership has changed:
-1303/3197 Counties have changed Clusters.
-Comparing LDA Clusters
-Cluster membership has changed:
-207/3197 Counties have changed Clusters.
-Comparing PCA Clusters
-Cluster membership has changed:
-172/3197 Counties have changed Clusters.
-Comparing UMAP Clusters
-Cluster membership has changed:
-1406/3197 Counties have changed Clusters.
+179/3197 Counties have changed Clusters.

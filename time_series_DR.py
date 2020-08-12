@@ -253,6 +253,11 @@ clustered_data = pd.DataFrame(index=df.index)
 # clustered_data['HD_cluster'] = y = target labels = cluster assignment
 clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
+# reverse is construct from PCA reduced data
+reverse = pca_reconstruct(df)
+
+
+'''
 # Do kPCA
 do_kPCA(df, clustered_data)
 results.write("Comparing Kernel PCA Clusters")
@@ -278,7 +283,6 @@ results.write("Comparing UMAP Clusters")
 do_UMAP(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
 
-'''
 print(clustered_data)
 
 # PCA to 2d

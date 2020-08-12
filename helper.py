@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import sys
 import itertools
 import pandas as pd
+import numpy as np
+from sklearn.decomposition import PCA
 
 def choose_k(df, filename):
     sse = []
@@ -72,4 +74,22 @@ def find_matches(listA, listB):
     return bestmatchA, bestmatchB
 
 def pca_reconstruct(df):
-    return
+    print("Original Shape")
+    print(df.shape)
+    pca = PCA(n_components=2)
+    X_proj = pca.fit_transform(df)
+    # find out hwo much variance is explained by these components
+    print("Explained Variance")
+    print(np.sum(pca.explained_variance_ratio_))
+    
+    print("New Reduced Shape")
+    print(X_proj.shape)
+
+    reverse = pd.DataFrame(pca.inverse_transform(X_proj), index=df.index)
+    print("Reverse Shape")
+    print(reverse.shape)
+
+    print("Reversed Head")
+    print(reverse.head())
+
+    return reverse
