@@ -1,88 +1,84 @@
+Comparing PCA Clusters
+Cluster membership has changed:
+48/3111 Counties have changed Clusters.
+
 Comparing MDS Clusters
 Cluster membership has changed:
-1147/3197 Counties have changed Clusters.
+66/3111 Counties have changed Clusters.
 
 Comparing Kernel PCA Clusters
 Cluster membership has changed:
-209/3197 Counties have changed Clusters.
+592/3111 Counties have changed Clusters.
 
 Comparing TSNE Clusters
 Cluster membership has changed:
-1303/3197 Counties have changed Clusters.
+731/3111 Counties have changed Clusters.
 
 Comparing LDA Clusters
 Cluster membership has changed:
-207/3197 Counties have changed Clusters.
-
-Comparing PCA Clusters
-Cluster membership has changed:
-172/3197 Counties have changed Clusters.
+116/3111 Counties have changed Clusters.
 
 Comparing UMAP Clusters
 Cluster membership has changed:
-1406/3197 Counties have changed Clusters.
-
-Comparing PCA Clusters
-Cluster membership has changed:
-172/3197 Counties have changed Clusters.
+674/3111 Counties have changed Clusters.
 
 Data by County total Counts
 Clustering Data before PCA:
 
 Cluster: 0: 
-263 Counties
-Max Cases for single County: 64.38043478260867
-Total Cases: 7323.519684791429
-Average Date of First Case: 2020-03-17
+669 Counties
+Max Cases for single County: 79.3750000000001
+Total Cases: 40518.42852672803
+Average Date of First Case: 2020-03-26
 
 
 Cluster: 1: 
-1080 Counties
-Max Cases for single County: 25.9375
-Total Cases: 16261.067380663251
-Average Date of First Case: 2020-03-29
+1215 Counties
+Max Cases for single County: 61.0
+Total Cases: 50744.43600633337
+Average Date of First Case: 2020-03-28
 
 
 Cluster: 2: 
-456 Counties
-Max Cases for single County: 61.78438661710036
-Total Cases: 13206.866945878624
-Average Date of First Case: 2020-03-17
+903 Counties
+Max Cases for single County: 42.25
+Total Cases: 24057.193659382974
+Average Date of First Case: 2020-04-14
 
 
 Cluster: 3: 
-1398 Counties
-Max Cases for single County: 22.1875
-Total Cases: 10410.786512391132
-Average Date of First Case: 2020-04-13
+324 Counties
+Max Cases for single County: 132.0
+Total Cases: 28350.488969410962
+Average Date of First Case: 2020-03-21
 
 
 Clustering Data after PCA to 2D:
 
 Cluster: 0: 
-439 Counties
-Max Cases for single County: 61.78438661710036
-Total Cases: 12778.950825256197
-Average Date of First Case: 2020-03-17
+914 Counties
+Max Cases for single County: 42.25
+Total Cases: 24418.56092018183
+Average Date of First Case: 2020-04-14
 
 
 Cluster: 1: 
-1371 Counties
-Max Cases for single County: 22.1875
-Total Cases: 10010.080455137911
-Average Date of First Case: 2020-04-13
+658 Counties
+Max Cases for single County: 79.3750000000001
+Total Cases: 40005.14583931799
+Average Date of First Case: 2020-03-26
 
 
 Cluster: 2: 
-262 Counties
-Max Cases for single County: 64.38043478260867
-Total Cases: 7356.026374393761
-Average Date of First Case: 2020-03-18
+1215 Counties
+Max Cases for single County: 57.999999999999936
+Total Cases: 50900.55600679512
+Average Date of First Case: 2020-03-28
 
 
 Cluster: 3: 
-1125 Counties
-Max Cases for single County: 26.6551724137931
-Total Cases: 17057.18286893658
-Average Date of First Case: 2020-03-29
+324 Counties
+Max Cases for single County: 132.0
+Total Cases: 28346.28439556039
+Average Date of First Case: 2020-03-21
 

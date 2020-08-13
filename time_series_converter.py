@@ -41,16 +41,20 @@ for _, rows in df.iterrows():
     if str(fips_dict[rows['counties']]) in pop_dict:
         fips = fips_dict[rows['counties']]
         pop = pop_dict[str(fips)]
-        new_df.loc[rows['counties'], rows['date']] = rows['cases']
+        pop_df.loc[rows['counties'], rows['date']] = (float(rows['cases'])/float(pop))
     else:
         unknown_counties.add(rows['counties'])
-    pop_df.loc[rows['counties'], rows['date']] = (float(rows['cases'])/float(pop))
+    new_df.loc[rows['counties'], rows['date']] = rows['cases']
+
     i += 1
     if (i % 1000 == 0):
         print("Done: " + str(i) + " iterations")
 
 new_df = new_df.diff(axis=1).fillna(new_df)
-new_df.to_csv("counties_by_datev2.csv", na_rep=0)
+new_df.to_csv("counties_by_date.csv", na_rep=0)
+
+for county in unknown_counties:
+   pop_df.drop([county], inplace=True)
 
 pop_df.to_csv("pop_norm_counties_by_date.csv", na_rep=0)
 

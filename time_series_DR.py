@@ -249,7 +249,7 @@ def do_MDS(df, clustered_data):
     covid_df_nd.index = df.index
     covid_df_nd.columns = ['MD1', 'MD2']
 
-    color_map = clustered_data['MDSƒ'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['MDS'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     cluster_plot = covid_df_nd.plot(kind='scatter', x='MD2', y='MD1', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"MDS Colored by New Clusters")
@@ -267,7 +267,8 @@ def do_MDS(df, clustered_data):
 
 
 results = open("results.txt", "w")
-df = pd.read_csv("max_norm_counties_by_date.csv", index_col=0)
+
+df = pd.read_csv("maxpop_norm_counties_by_date.csv", index_col=0)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
@@ -291,7 +292,6 @@ do_PCA(df, clustered_data)
 results.write("Comparing PCA Clusters")
 compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
 
-'''
 # Do MDS
 do_MDS(df, clustered_data)
 results.write("Comparing MDS Clusters")
@@ -316,7 +316,7 @@ compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
 results.write("Comparing UMAP Clusters")
 do_UMAP(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
-'''
+
 # Save Findings
 results.write("Data by County total Counts")
 results.write("\nClustering Data before PCA:\n")
@@ -338,3 +338,4 @@ plt.savefig("RobustPCA.png")
 
 compare_clusters(clustered_data['HD_cluster'], df_2d, 2, k_2, clusters_2d)
 plot_total(df, min_clusters, max_clusters)
+'''
