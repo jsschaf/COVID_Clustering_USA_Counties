@@ -3,6 +3,9 @@ import numpy as np
 # import data
 df = pd.read_csv("counties_by_datev2.csv", index_col=0)
 
+
+# import data
+pops = pd.read_csv("co-est2019-alldata.csv")
 # Normalize by row sums
 # new_df = df.div(df.sum(axis=1), axis=0)#.fillna(0)
 # new_df.to_csv("sum_norm_counties_by_date.csv", na_rep=0)
