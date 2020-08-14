@@ -268,7 +268,7 @@ def do_MDS(df, clustered_data):
 
 results = open("results.txt", "w")
 
-df = pd.read_csv("maxpop_norm_counties_by_date.csv", index_col=0)
+df = pd.read_csv("pop_maxnorm_counties_by_date.csv", index_col=0)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
