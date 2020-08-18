@@ -87,6 +87,9 @@ def do_TSNE(df, clustered_data):
     
     tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by Original Clusters")
+    tsne_plot.tick_params(labelsize=12)
+    tsne_plot.set_ylabel('T2', fontsize='12')
+    tsne_plot.set_xlabel('T1', fontsize='12')
     plt.savefig('County_TSNE_kmeans_2D_oldclusters.png')
     plt.close()
 
@@ -114,6 +117,9 @@ def do_TSNE(df, clustered_data):
     
     tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by New Clusters")
+    tsne_plot.tick_params(labelsize=12)
+    tsne_plot.set_ylabel('T2', fontsize='12')
+    tsne_plot.set_xlabel('T1', fontsize='12')
     plt.savefig('County_TSNE_spectral_2D_newclusters.png')
     plt.close()
 
@@ -157,6 +163,9 @@ def do_UMAP(df, clustered_data):
         embedding[:, 1],
         c=color_map)
     #plt.gca().set_aspect('equal', 'datalim')
+    plt.tick_params(labelsize=12)
+    plt.ylabel('UMAP2', fontsize='12')
+    plt.xlabel('UMAP1', fontsize='12')
     plt.title('UMAP Colored by Original Clusters', fontsize=18)
     plt.savefig('County_UMAP_kmeans_2D_oldclusters.png')
     plt.close()
@@ -171,6 +180,9 @@ def do_UMAP(df, clustered_data):
         embedding[:, 0],
         embedding[:, 1],
         c=color_map)
+    plt.tick_params(labelsize=12)
+    plt.ylabel('UMAP2', fontsize='12')
+    plt.xlabel('UMAP1', fontsize='12')
     #plt.gca().set_aspect('equal', 'datalim')
     plt.title('UMAP Colored by New Clusters', fontsize=18)
     plt.savefig('County_UMAP_kmeans_2D_newclusters.png')
@@ -193,13 +205,18 @@ def do_PCA(df, clustered_data):
     
     cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"PCA Colored by New Clusters")
-
+    cluster_plot.tick_params(labelsize=12)
+    cluster_plot.set_ylabel('PC2', fontsize='12')
+    cluster_plot.set_xlabel('PC1', fontsize='12')
     plt.savefig('County_PCA_kmeans_2D_newclusters.png')
     plt.close()
     color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
 
     original_cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
     original_cluster_plot.set_title(u"PCA Colored by Original Clusters")
+    cluster_plot.tick_params(labelsize=12)
+    cluster_plot.set_ylabel('PC2', fontsize='12')
+    cluster_plot.set_xlabel('PC1', fontsize='12')
     plt.savefig('County_PCA_kmeans_2D_oldclusters.png')
     plt.close()
 
@@ -286,8 +303,8 @@ clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 # reverse = pca_reconstruct(df)
 
 # Do PCA
-# do_PCA(df, clustered_data)
-# results.write("Comparing PCA Clusters")
+do_PCA(df, clustered_data)
+results.write("Comparing PCA Clusters")
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
 
 # Do MDS
@@ -301,9 +318,9 @@ clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['kPCA'], optimal_k)
 
 # Do TSNE for 2 DIMS
-results.write("Comparing TSNE Clusters")
-do_TSNE(df, clustered_data)
-compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
+# results.write("Comparing TSNE Clusters")
+# do_TSNE(df, clustered_data)
+#compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
 
 # Do LDA for 2 Dimensions
 # results.write("Comparing LDA Clusters")
@@ -311,8 +328,8 @@ compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
 
 # Do UMAP
-# results.write("Comparing UMAP Clusters")
-# do_UMAP(df, clustered_data)
+#results.write("Comparing UMAP Clusters")
+#do_UMAP(df, clustered_data)
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
 
 # Save Findings

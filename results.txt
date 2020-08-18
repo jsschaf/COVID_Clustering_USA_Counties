@@ -1,8 +1,4 @@
-Comparing TSNE Clusters
-Cluster membership has changed:
-1338/3201 Counties have changed Clusters.
-
-Data by County total Counts
+Comparing PCA ClustersData by County total Counts
 Clustering Data before PCA:
 
 Clustering Data after PCA to 2D:
