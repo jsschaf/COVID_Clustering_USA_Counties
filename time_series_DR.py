@@ -12,7 +12,6 @@ import seaborn as sns
 import umap
 import r_PCA as robust
 from sklearn.decomposition import PCA
-
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, MeanShift, Birch, MiniBatchKMeans
 
 def compare_clusters(old, new, k):
@@ -84,7 +83,7 @@ def do_TSNE(df, clustered_data):
     covid_df_nd.columns = tsne_columns
     tsne_2d = covid_df_nd
 
-    color_map = clustered_data['HD_cluster'].map({0:'g', 1: 'b', 2: 'k', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['HD_cluster'].map({0:'b', 1: 'r', 2: 'k', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by Original Clusters")
@@ -111,7 +110,7 @@ def do_TSNE(df, clustered_data):
 
     clustered_data['TSNE'] = pd.Series(clustering.labels_, index=df.index)
 
-    color_map = clustered_data['TSNE'].map({0:'k', 1: 'r', 2: 'b', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['TSNE'].map({0:'b', 1: 'k', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by New Clusters")
@@ -140,7 +139,7 @@ def do_LDA(df, clustered_data):
     kmeans = KMeans(n_clusters=4, random_state=5)
     clusters = kmeans.fit(lda_2d)
     clustered_data['LDA'] = pd.Series(clusters.labels_, index=df.index)
-    color_map = clustered_data['LDA'].map({0:'g', 1: 'r', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['LDA'].map({0:'b', 1: 'k', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     lda_plot = lda_2d.plot(kind='scatter',x='LD2',y='LD1', c=color_map, figsize=(12,8))
     lda_plot.set_title(u"LDA Colored by New Clusters")
     plt.savefig('County_LDA_kmeans_2D_newclusters.png')
@@ -190,7 +189,7 @@ def do_PCA(df, clustered_data):
     covid_df_nd.index = df.index
     covid_df_nd.columns = ['PC1', 'PC2']
 
-    color_map = clustered_data['PCA'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['PCA'].map({0:'g', 1: 'b', 2: 'k', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"PCA Colored by New Clusters")
@@ -220,7 +219,7 @@ def do_kPCA(df, clustered_data):
     covid_df_nd.index = df.index
     covid_df_nd.columns = ['PC1', 'PC2']
 
-    color_map = clustered_data['kPCA'].map({0:'b', 1: 'k', 2: 'r', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['kPCA'].map({0:'b', 1: 'k', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"kPCA Colored by New Clusters")
@@ -249,7 +248,7 @@ def do_MDS(df, clustered_data):
     covid_df_nd.index = df.index
     covid_df_nd.columns = ['MD1', 'MD2']
 
-    color_map = clustered_data['MDS'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
+    color_map = clustered_data['MDS'].map({0:'b', 1: 'k', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
     cluster_plot = covid_df_nd.plot(kind='scatter', x='MD2', y='MD1', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"MDS Colored by New Clusters")
@@ -265,10 +264,9 @@ def do_MDS(df, clustered_data):
 
     return
 
-
 results = open("results.txt", "w")
 
-df = pd.read_csv("pop_maxnorm_counties_by_date.csv", index_col=0)
+df = pd.read_csv("max_counties_by_date.csv", index_col=0)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
@@ -288,19 +286,19 @@ clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 # reverse = pca_reconstruct(df)
 
 # Do PCA
-do_PCA(df, clustered_data)
-results.write("Comparing PCA Clusters")
-compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
+# do_PCA(df, clustered_data)
+# results.write("Comparing PCA Clusters")
+# compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
 
 # Do MDS
-do_MDS(df, clustered_data)
-results.write("Comparing MDS Clusters")
-compare_clusters(clustered_data['HD_cluster'], clustered_data['MDS'], optimal_k)
+# do_MDS(df, clustered_data)
+# results.write("Comparing MDS Clusters")
+# compare_clusters(clustered_data['HD_cluster'], clustered_data['MDS'], optimal_k)
 
 # Do kPCA
-do_kPCA(df, clustered_data)
-results.write("Comparing Kernel PCA Clusters")
-compare_clusters(clustered_data['HD_cluster'], clustered_data['kPCA'], optimal_k)
+# do_kPCA(df, clustered_data)
+# results.write("Comparing Kernel PCA Clusters")
+# compare_clusters(clustered_data['HD_cluster'], clustered_data['kPCA'], optimal_k)
 
 # Do TSNE for 2 DIMS
 results.write("Comparing TSNE Clusters")
@@ -308,21 +306,21 @@ do_TSNE(df, clustered_data)
 compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
 
 # Do LDA for 2 Dimensions
-results.write("Comparing LDA Clusters")
-do_LDA(df, clustered_data)
-compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
+# results.write("Comparing LDA Clusters")
+# do_LDA(df, clustered_data)
+# compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
 
 # Do UMAP
-results.write("Comparing UMAP Clusters")
-do_UMAP(df, clustered_data)
-compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
+# results.write("Comparing UMAP Clusters")
+# do_UMAP(df, clustered_data)
+# compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
 
 # Save Findings
 results.write("Data by County total Counts")
 results.write("\nClustering Data before PCA:\n")
-print_results(df, optimal_k, clustered_data['HD_cluster'])
+#print_results(df, optimal_k, clustered_data['HD_cluster'])
 results.write("\nClustering Data after PCA to 2D:\n")
-print_results(df, optimal_k, clustered_data['PCA'])
+#print_results(df, optimal_k, clustered_data['PCA'])
 
 '''
 print(clustered_data)

@@ -1,5 +1,6 @@
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import math
+
 # import data
 df = pd.read_csv("us-counties.csv")
 masks = pd.read_csv("mask-use-by-county.csv")
@@ -43,6 +44,7 @@ new_df = pd.DataFrame(index=counties,columns=dates)
 
 pop_df = pd.DataFrame(index=counties,columns=dates)
 '''
+new_df = pd.DataFrame(index=counties,columns=dates)
 mask_df = pd.DataFrame(index=counties,columns=dates)
 unknown_masks = set()
 i = 0
@@ -63,14 +65,14 @@ for _, rows in df.iterrows():
     else:
         unknown_masks.add(rows['counties'])
 
-    # new_df.loc[rows['counties'], rows['date']] = rows['cases']
+    new_df.loc[rows['counties'], rows['date']] = rows['cases']
     i += 1
 
     if (i % 1000 == 0):
         print("Done: " + str(i) + " iterations")
 
-#new_df = new_df.diff(axis=1).fillna(new_df)
-#new_df.to_csv("counties_by_date.csv", na_rep=0)
+new_df = new_df.diff(axis=1).fillna(new_df)
+new_df.to_csv("counties_by_date.csv", na_rep=0)
 
 # remove counties with no mask data 
 for county in unknown_masks:
