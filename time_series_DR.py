@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import sys
+import statistics
 from sklearn.utils import shuffle
 from sklearn.manifold import TSNE, MDS
 from sklearn.decomposition import KernelPCA
@@ -24,9 +26,9 @@ def compare_clusters(old, new, k):
     for cluster_number in range(0, k):
         cluster_grouping_HD.append(set(old[old == cluster_number].index))
         cluster_grouping_nD.append(set(new[new == cluster_number].index))
-    
+
     cluster_A, cluster_B = find_matches(cluster_grouping_nD, cluster_grouping_HD)
-    
+
     if(cluster_A == cluster_B):
         results.write("Clusters after PCA to 2 dimensions is the same\n")
     else:
@@ -43,34 +45,41 @@ def compare_clusters(old, new, k):
         results.write("\nCluster membership has changed:\n")
         results.write(str(int(num_changed)) + "/" + str(len(old.index)) + " Counties have changed Clusters.\n\n")
 
-def print_results(df, k, labels):
+def print_results(df, k, labels, og_data):
     ''' Output Findings '''
     for i in range(k):
         # select only data observations with cluster label == i
-        ds = df.iloc[np.where(labels==i)]
-        HD_first_dates = []
-        HD_max_cases = 0
-        HD_total_cases = 0
+        ds = og_df.iloc[np.where(labels==i)]
+        first_dates = []
+        all_county_cases = []
+        total_cases = 0
+        max_case = 0
+        min_case = 99999999
         # save the data observations
-        HD_number_members = len(ds)
+        number_members = len(ds)
         for _, value in ds.iterrows():
             county_cases = sum(value)
-            if county_cases > HD_max_cases:
-                HD_max_cases = county_cases
-            HD_total_cases += county_cases
+            if county_cases > max_case:
+                max_case = county_cases
+            if county_cases < min_case:
+                min_case = county_cases
+            all_county_cases.append(county_cases)
+            total_cases += county_cases
             for date, cases in value.items():
                 if cases != 0:
                     date = datetime.datetime.strptime(date,'%Y-%m-%d')
-                    HD_first_dates.append(date)
+                    first_dates.append(date)
                     break
         
         # Find Average Date of first case
-        total_offset = sum((d - HD_first_dates[0] for d in HD_first_dates), datetime.timedelta(0)) / len(HD_first_dates)
-        ave_date = HD_first_dates[0] + total_offset
+        total_offset = sum((d - first_dates[0] for d in first_dates), datetime.timedelta(0)) / len(first_dates)
+        ave_date = first_dates[0] + total_offset
         
         # Output Metrics + Summary
-        results.write("\nCluster: " + str(i) + ": \n" + str(HD_number_members) + " Counties\n")
-        results.write("Max Cases for single County: " + str(HD_max_cases)+"\nTotal Cases: " + str(HD_total_cases))
+        results.write("\nCluster: " + str(i) + ": \n" + str(number_members) + " Counties\n")
+        results.write("Median Cases by County: " + str(statistics.median(all_county_cases))+"\nMean Cases by County: " + str(statistics.mean(all_county_cases)))
+        results.write("\nMinimum total Case Count:" + str(min_case))
+        results.write("\nMax total Case Count: " + str(max_case))
         results.write("\nAverage Date of First Case: " + str(ave_date.strftime('%Y-%m-%d')) + "\n\n")
 
 def do_TSNE(df, clustered_data):
@@ -85,7 +94,7 @@ def do_TSNE(df, clustered_data):
 
     color_map = clustered_data['HD_cluster'].map({0:'b', 1: 'r', 2: 'k', 3:'g', 4:'m', 5:'c', 6:'y', 7:'w'})
     
-    tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
+    tsne_plot = tsne_2d.plot(kind='scatter',x='T1',y='T2', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by Original Clusters")
     tsne_plot.tick_params(labelsize=12)
     tsne_plot.set_ylabel('T2', fontsize='12')
@@ -115,12 +124,12 @@ def do_TSNE(df, clustered_data):
 
     color_map = clustered_data['TSNE'].map({0:'b', 1: 'k', 2: 'g', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
-    tsne_plot = tsne_2d.plot(kind='scatter',x='T2',y='T1', c=color_map, figsize=(12,8))
+    tsne_plot = tsne_2d.plot(kind='scatter',x='T1',y='T2', c=color_map, figsize=(12,8))
     tsne_plot.set_title(u"TSNE Colored by New Clusters")
     tsne_plot.tick_params(labelsize=12)
     tsne_plot.set_ylabel('T2', fontsize='12')
     tsne_plot.set_xlabel('T1', fontsize='12')
-    plt.savefig('County_TSNE_spectral_2D_newclusters.png')
+    plt.savefig('County_TSNE_kmeans_2D_newclusters.png')
     plt.close()
 
 def do_LDA(df, clustered_data):
@@ -203,7 +212,7 @@ def do_PCA(df, clustered_data):
 
     color_map = clustered_data['PCA'].map({0:'g', 1: 'b', 2: 'k', 3:'r', 4:'m', 5:'c', 6:'y', 7:'w'})
     
-    cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    cluster_plot = covid_df_nd.plot(kind='scatter', x='PC1', y='PC2', c=color_map, figsize=(12,8))
     cluster_plot.set_title(u"PCA Colored by New Clusters")
     cluster_plot.tick_params(labelsize=12)
     cluster_plot.set_ylabel('PC2', fontsize='12')
@@ -212,11 +221,11 @@ def do_PCA(df, clustered_data):
     plt.close()
     color_map = clustered_data['HD_cluster'].map({0:'r', 1: 'g', 2: 'b', 3:'k', 4:'m', 5:'c', 6:'y', 7:'w'})
 
-    original_cluster_plot = covid_df_nd.plot(kind='scatter', x='PC2', y='PC1', c=color_map, figsize=(12,8))
+    original_cluster_plot = covid_df_nd.plot(kind='scatter', x='PC1', y='PC2', c=color_map, figsize=(12,8))
     original_cluster_plot.set_title(u"PCA Colored by Original Clusters")
     cluster_plot.tick_params(labelsize=12)
-    cluster_plot.set_ylabel('PC2', fontsize='12')
     cluster_plot.set_xlabel('PC1', fontsize='12')
+    cluster_plot.set_ylabel('PC2', fontsize='12')
     plt.savefig('County_PCA_kmeans_2D_oldclusters.png')
     plt.close()
 
@@ -284,12 +293,13 @@ def do_MDS(df, clustered_data):
 results = open("results.txt", "w")
 
 df = pd.read_csv("max_counties_by_date.csv", index_col=0)
+og_df = pd.read_csv("counties_by_date.csv", index_col=0)
 
 # Perform clustering before PCA, for comparison
 kmeans_performance = []
 optimal_k = 4
 max_clusters = 8
-
+plt.rc('font', size=12)
 HD_clusters = KMeans(n_clusters=4, random_state=5).fit(df)
 
 # print out graph to show kmeans performance for each k in higher dimension
@@ -301,12 +311,17 @@ clustered_data['HD_cluster'] = pd.Series(HD_clusters.labels_, index=df.index)
 
 # reverse is construct from PCA reduced data
 # reverse = pca_reconstruct(df)
+# Save Findings
+#results.write("Data by County total Counts")
+#results.write("\nClustering Data before PCA:\n")
+print_results(df, optimal_k, clustered_data['HD_cluster'], og_df)
 
 # Do PCA
+print("PCA")
 do_PCA(df, clustered_data)
 results.write("Comparing PCA Clusters")
-# compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
-
+compare_clusters(clustered_data['HD_cluster'], clustered_data['PCA'], optimal_k)
+print_results(df, 4, clustered_data['PCA'], og_df)
 # Do MDS
 # do_MDS(df, clustered_data)
 # results.write("Comparing MDS Clusters")
@@ -318,9 +333,11 @@ results.write("Comparing PCA Clusters")
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['kPCA'], optimal_k)
 
 # Do TSNE for 2 DIMS
-# results.write("Comparing TSNE Clusters")
-# do_TSNE(df, clustered_data)
-#compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
+print("TSNE")
+results.write("Comparing TSNE Clusters")
+do_TSNE(df, clustered_data)
+print_results(df, 4, clustered_data['TSNE'], og_df)
+compare_clusters(clustered_data['HD_cluster'], clustered_data['TSNE'], optimal_k)
 
 # Do LDA for 2 Dimensions
 # results.write("Comparing LDA Clusters")
@@ -328,16 +345,12 @@ results.write("Comparing PCA Clusters")
 # compare_clusters(clustered_data['HD_cluster'], clustered_data['LDA'], optimal_k)
 
 # Do UMAP
-#results.write("Comparing UMAP Clusters")
-#do_UMAP(df, clustered_data)
-# compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
+print("UMAP")
+results.write("Comparing UMAP Clusters")
+do_UMAP(df, clustered_data)
+print_results(df, 4, clustered_data['UMAP'], og_df)
+compare_clusters(clustered_data['HD_cluster'], clustered_data['UMAP'], optimal_k)
 
-# Save Findings
-results.write("Data by County total Counts")
-results.write("\nClustering Data before PCA:\n")
-#print_results(df, optimal_k, clustered_data['HD_cluster'])
-results.write("\nClustering Data after PCA to 2D:\n")
-#print_results(df, optimal_k, clustered_data['PCA'])
 
 '''
 print(clustered_data)

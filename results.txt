@@ -1,4 +1,156 @@
-Comparing PCA ClustersData by County total Counts
-Clustering Data before PCA:
 
-Clustering Data after PCA to 2D:
+Cluster: 0: 
+1079 Counties
+Median Cases by County: 265
+Mean Cases by County: 796.3299351251159
+Minimum total Case Count:9
+Max total Case Count: 37072
+Average Date of First Case: 2020-03-29
+
+
+Cluster: 1: 
+1443 Counties
+Median Cases by County: 72
+Mean Cases by County: 387.13513513513516
+Minimum total Case Count:1
+Max total Case Count: 44005
+Average Date of First Case: 2020-04-13
+
+
+Cluster: 2: 
+455 Counties
+Median Cases by County: 1720
+Mean Cases by County: 5596.32967032967
+Minimum total Case Count:96
+Max total Case Count: 220762
+Average Date of First Case: 2020-03-17
+
+
+Cluster: 3: 
+224 Counties
+Median Cases by County: 1507.0
+Mean Cases by County: 6204.683035714285
+Minimum total Case Count:61
+Max total Case Count: 234609
+Average Date of First Case: 2020-03-16
+
+Comparing PCA Clusters
+Cluster membership has changed:
+197/3201 Counties have changed Clusters.
+
+
+Cluster: 0: 
+1407 Counties
+Median Cases by County: 68
+Mean Cases by County: 374.66950959488275
+Minimum total Case Count:1
+Max total Case Count: 44005
+Average Date of First Case: 2020-04-13
+
+
+Cluster: 1: 
+426 Counties
+Median Cases by County: 1681.0
+Mean Cases by County: 5780.178403755868
+Minimum total Case Count:96
+Max total Case Count: 220762
+Average Date of First Case: 2020-03-17
+
+
+Cluster: 2: 
+256 Counties
+Median Cases by County: 1369.0
+Mean Cases by County: 5494.16796875
+Minimum total Case Count:61
+Max total Case Count: 234609
+Average Date of First Case: 2020-03-17
+
+
+Cluster: 3: 
+1112 Counties
+Median Cases by County: 269.0
+Mean Cases by County: 861.5395683453237
+Minimum total Case Count:9
+Max total Case Count: 37072
+Average Date of First Case: 2020-03-28
+
+Comparing TSNE Clusters
+Cluster: 0: 
+947 Counties
+Median Cases by County: 766
+Mean Cases by County: 3255.846884899683
+Minimum total Case Count:24
+Max total Case Count: 220762
+Average Date of First Case: 2020-03-21
+
+
+Cluster: 1: 
+717 Counties
+Median Cases by County: 387
+Mean Cases by County: 2450.216178521618
+Minimum total Case Count:1
+Max total Case Count: 234609
+Average Date of First Case: 2020-03-24
+
+
+Cluster: 2: 
+717 Counties
+Median Cases by County: 158
+Mean Cases by County: 406.7252440725244
+Minimum total Case Count:1
+Max total Case Count: 14925
+Average Date of First Case: 2020-04-07
+
+
+Cluster: 3: 
+820 Counties
+Median Cases by County: 47.0
+Mean Cases by County: 271.14756097560974
+Minimum total Case Count:1
+Max total Case Count: 44005
+Average Date of First Case: 2020-04-19
+
+
+Cluster membership has changed:
+1338/3201 Counties have changed Clusters.
+
+Comparing UMAP Clusters
+Cluster: 0: 
+787 Counties
+Median Cases by County: 93
+Mean Cases by County: 312.73062261753495
+Minimum total Case Count:1
+Max total Case Count: 17816
+Average Date of First Case: 2020-04-11
+
+
+Cluster: 1: 
+707 Counties
+Median Cases by County: 367
+Mean Cases by County: 2430.97171145686
+Minimum total Case Count:1
+Max total Case Count: 234609
+Average Date of First Case: 2020-03-28
+
+
+Cluster: 2: 
+734 Counties
+Median Cases by County: 72.5
+Mean Cases by County: 383.8692098092643
+Minimum total Case Count:1
+Max total Case Count: 44005
+Average Date of First Case: 2020-04-14
+
+
+Cluster: 3: 
+973 Counties
+Median Cases by County: 758
+Mean Cases by County: 3193.70914696814
+Minimum total Case Count:26
+Max total Case Count: 220762
+Average Date of First Case: 2020-03-21
+
+
+Cluster membership has changed:
+1587/3201 Counties have changed Clusters.
+
